@@ -201,3 +201,7 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+
+# App Settings
+**/appsettings.json
+**/appsettings.*.json
