@@ -26,6 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Vault\Vault.csproj" />
     <ProjectReference Include="..\Vault.Core\Vault.Core.csproj" />
+    <ProjectReference Include="..\Vault.Db\Vault.Db.csproj" />
   </ItemGroup>
 
 </Project>

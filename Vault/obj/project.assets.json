@@ -987,6 +987,21 @@
           "bin/placeholder/Vault.Core.dll": {}
         }
       },
+      "Vault.Db/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v9.0",
+        "dependencies": {
+          "Microsoft.EntityFrameworkCore": "9.0.0",
+          "Npgsql.EntityFrameworkCore.PostgreSQL": "9.0.0",
+          "Vault.Core": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/Vault.Db.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/Vault.Db.dll": {}
+        }
+      },
       "Vault.Index/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v9.0",
@@ -2950,6 +2965,11 @@
       "path": "../Vault.Core/Vault.Core.csproj",
       "msbuildProject": "../Vault.Core/Vault.Core.csproj"
     },
+    "Vault.Db/1.0.0": {
+      "type": "project",
+      "path": "../Vault.Db/Vault.Db.csproj",
+      "msbuildProject": "../Vault.Db/Vault.Db.csproj"
+    },
     "Vault.Index/1.0.0": {
       "type": "project",
       "path": "../Vault.Index/Vault.Index.csproj",
@@ -2963,6 +2983,7 @@
       "Microsoft.EntityFrameworkCore.Design >= 9.0.0",
       "Npgsql.EntityFrameworkCore.PostgreSQL >= 9.0.0",
       "Vault.Core >= 1.0.0",
+      "Vault.Db >= 1.0.0",
       "Vault.Index >= 1.0.0"
     ]
   },
@@ -2993,6 +3014,9 @@
           "projectReferences": {
             "/Users/pratyashbasel/Desktop/datashare-main/Vault/Vault.Core/Vault.Core.csproj": {
               "projectPath": "/Users/pratyashbasel/Desktop/datashare-main/Vault/Vault.Core/Vault.Core.csproj"
+            },
+            "/Users/pratyashbasel/Desktop/datashare-main/Vault/Vault.Db/Vault.Db.csproj": {
+              "projectPath": "/Users/pratyashbasel/Desktop/datashare-main/Vault/Vault.Db/Vault.Db.csproj"
             },
             "/Users/pratyashbasel/Desktop/datashare-main/Vault/Vault.Index/Vault.Index.csproj": {
               "projectPath": "/Users/pratyashbasel/Desktop/datashare-main/Vault/Vault.Index/Vault.Index.csproj"

@@ -1,6 +1,8 @@
 using Vault.Index.IServices;
 using Vault.Models;
 using UglyToad.PdfPig;
+using Microsoft.EntityFrameworkCore.Internal;
+using Vault.Interfaces;
 
 namespace Vault.Tasks;
 
@@ -9,12 +11,14 @@ public class Worker : BackgroundService
     private readonly ILogger<Worker> _logger;
     private readonly IElasticSearchService _elasticService;
     private readonly FileSystemWatcher _watcher;
+    private readonly IServiceScopeFactory _scopeFactory;
     private const string WatchPath = "/tmp/vault_ingest";
 
-    public Worker(ILogger<Worker> logger, IElasticSearchService elasticService)
+    public Worker(ILogger<Worker> logger, IElasticSearchService elasticService, IServiceScopeFactory scopeFactory)
     {
         _logger = logger;
         _elasticService = elasticService;
+        _scopeFactory = scopeFactory;
         Directory.CreateDirectory(WatchPath);
         _watcher = new FileSystemWatcher(WatchPath);
         _watcher.Created += OnCreated;
@@ -52,19 +56,36 @@ public class Worker : BackgroundService
             // read content
             var content = GetFileContent(filePath);
 
-            var doc = new Document
+            if(string.IsNullOrWhiteSpace(content)) return;
+
+            var fileInfo = new FileInfo(filePath);
+
+            Document doc = new()
             {
                 Id = Guid.NewGuid().ToString(),
                 Path = filePath,
                 Content = content,
                 ProjectId = "defaut",
-                Status = 1 // Parsed
+                Status = 1, // Parsed
+                ContentType = fileInfo.Extension,
+                ContentLength = fileInfo.Length,
+                ExtractionDate = DateTime.UtcNow,
+                Metadata = "{}", // [FIX] Required field
+                ParentId = Guid.Empty.ToString() // [FIX] Required field
             };
 
             //Send it to elasticsearch
-            await _elasticService.IndexDocumentAsync(doc);
+            using (var scope = _scopeFactory.CreateScope()){
+                var repository = scope.ServiceProvider.GetRequiredService<IVaultRepository<Document>>();
 
-            _logger.LogInformation("Sucessfully Indexed File "+ filePath);
+                await repository.AddAsync(doc);
+                await repository.SaveChangesAsync(); // [FIX] Commit transaction
+                _logger.LogInformation("Saved to DB: {Id} -> "+ doc.Id);
+            }
+
+            await _elasticService.IndexDocumentAsync(doc);
+            _logger.LogInformation("Indexing of the file completed; {Id} -> " + doc.Id);
+
         }
         catch(Exception ex)
         {
