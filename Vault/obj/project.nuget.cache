@@ -1,11 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "Tvxfhc8buRY=",
+  "dgSpecHash": "XkLowvj6lgU=",
   "success": true,
   "projectFilePath": "/Users/pratyashbasel/Desktop/datashare-main/Vault/Vault/Vault.csproj",
   "expectedPackageFiles": [
-    "/Users/pratyashbasel/.nuget/packages/elastic.clients.elasticsearch/9.2.2/elastic.clients.elasticsearch.9.2.2.nupkg.sha512",
-    "/Users/pratyashbasel/.nuget/packages/elastic.transport/0.10.1/elastic.transport.0.10.1.nupkg.sha512",
+    "/Users/pratyashbasel/.nuget/packages/elastic.clients.elasticsearch/8.12.0/elastic.clients.elasticsearch.8.12.0.nupkg.sha512",
+    "/Users/pratyashbasel/.nuget/packages/elastic.transport/0.4.17/elastic.transport.0.4.17.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.aspnetcore.openapi/9.0.10/microsoft.aspnetcore.openapi.9.0.10.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.bcl.asyncinterfaces/7.0.0/microsoft.bcl.asyncinterfaces.7.0.0.nupkg.sha512",
@@ -17,7 +17,6 @@
     "/Users/pratyashbasel/.nuget/packages/microsoft.codeanalysis.csharp.workspaces/4.8.0/microsoft.codeanalysis.csharp.workspaces.4.8.0.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.codeanalysis.workspaces.common/4.8.0/microsoft.codeanalysis.workspaces.common.4.8.0.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.codeanalysis.workspaces.msbuild/4.8.0/microsoft.codeanalysis.workspaces.msbuild.4.8.0.nupkg.sha512",
-    "/Users/pratyashbasel/.nuget/packages/microsoft.csharp/4.7.0/microsoft.csharp.4.7.0.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.entityframeworkcore/9.0.0/microsoft.entityframeworkcore.9.0.0.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.entityframeworkcore.abstractions/9.0.0/microsoft.entityframeworkcore.abstractions.9.0.0.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.entityframeworkcore.analyzers/9.0.0/microsoft.entityframeworkcore.analyzers.9.0.0.nupkg.sha512",
@@ -51,5 +50,18 @@
     "/Users/pratyashbasel/.nuget/packages/system.text.json/9.0.0/system.text.json.9.0.0.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/system.threading.channels/7.0.0/system.threading.channels.7.0.0.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1603",
+      "level": "Warning",
+      "message": "Vault.Index depends on Elastic.Clients.Elasticsearch (>= 8.11.1) but Elastic.Clients.Elasticsearch 8.11.1 was not found. Elastic.Clients.Elasticsearch 8.12.0 was resolved instead.",
+      "projectPath": "/Users/pratyashbasel/Desktop/datashare-main/Vault/Vault/Vault.csproj",
+      "warningLevel": 1,
+      "filePath": "/Users/pratyashbasel/Desktop/datashare-main/Vault/Vault/Vault.csproj",
+      "libraryId": "Elastic.Clients.Elasticsearch",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    }
+  ]
 }

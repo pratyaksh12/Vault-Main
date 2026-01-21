@@ -1,6 +1,7 @@
 <Solution>
   <Project Path="Vault.Core/Vault.Core.csproj" />
   <Project Path="Vault.Index/Vault.Index.csproj" />
+  <Project Path="Vault.Tasks/Vault.Tasks.csproj" />
   <Project Path="Vault.Tests/Vault.Tests.csproj" />
   <Project Path="Vault/Vault.csproj" />
 </Solution>
