@@ -1,8 +1,6 @@
-using System;
 using Moq;
 using Vault.Interfaces;
 using Vault.Models;
-
 namespace Vault.Tests.RepositoryTests;
 
 public class DocumentRepositoryTest

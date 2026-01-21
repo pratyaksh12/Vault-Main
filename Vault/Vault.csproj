@@ -17,8 +17,12 @@
     <Folder Include="Data/" />
     <Folder Include="Data/Context/" />
     <Folder Include="Interfaces/" />
-    <Folder Include="Models/" />
     <Folder Include="Repositories/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Vault.Core\Vault.Core.csproj" />
+    <ProjectReference Include="..\Vault.Index\Vault.Index.csproj" />
   </ItemGroup>
 
 </Project>

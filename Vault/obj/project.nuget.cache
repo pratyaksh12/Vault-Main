@@ -1,9 +1,11 @@
 {
   "version": 2,
-  "dgSpecHash": "CBzqp5LvNqU=",
+  "dgSpecHash": "Tvxfhc8buRY=",
   "success": true,
   "projectFilePath": "/Users/pratyashbasel/Desktop/datashare-main/Vault/Vault/Vault.csproj",
   "expectedPackageFiles": [
+    "/Users/pratyashbasel/.nuget/packages/elastic.clients.elasticsearch/9.2.2/elastic.clients.elasticsearch.9.2.2.nupkg.sha512",
+    "/Users/pratyashbasel/.nuget/packages/elastic.transport/0.10.1/elastic.transport.0.10.1.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/humanizer.core/2.14.1/humanizer.core.2.14.1.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.aspnetcore.openapi/9.0.10/microsoft.aspnetcore.openapi.9.0.10.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.bcl.asyncinterfaces/7.0.0/microsoft.bcl.asyncinterfaces.7.0.0.nupkg.sha512",
@@ -15,6 +17,7 @@
     "/Users/pratyashbasel/.nuget/packages/microsoft.codeanalysis.csharp.workspaces/4.8.0/microsoft.codeanalysis.csharp.workspaces.4.8.0.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.codeanalysis.workspaces.common/4.8.0/microsoft.codeanalysis.workspaces.common.4.8.0.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.codeanalysis.workspaces.msbuild/4.8.0/microsoft.codeanalysis.workspaces.msbuild.4.8.0.nupkg.sha512",
+    "/Users/pratyashbasel/.nuget/packages/microsoft.csharp/4.7.0/microsoft.csharp.4.7.0.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.entityframeworkcore/9.0.0/microsoft.entityframeworkcore.9.0.0.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.entityframeworkcore.abstractions/9.0.0/microsoft.entityframeworkcore.abstractions.9.0.0.nupkg.sha512",
     "/Users/pratyashbasel/.nuget/packages/microsoft.entityframeworkcore.analyzers/9.0.0/microsoft.entityframeworkcore.analyzers.9.0.0.nupkg.sha512",
