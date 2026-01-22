@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using Vault.Index.IServices;
 using Vault.Interfaces;
 using Vault.Models;
+using Vault.Core.Models;
 
 namespace Vault.Controller
 {
@@ -36,15 +37,7 @@ namespace Vault.Controller
             try
             {
                 var results = await _elasticService.SearchDocumentAsync(query);
-                return response.Hits.Select(hit => new SearchResult
-                {
-                    Id = hit.Source?.Id ?? "",
-                    Path = hit.Source?.Path ?? "",
-                    PageNumber = hit.Source?.PageNumber ?? 1, // Map Page Number
-                    Snippet = hit.Highlight != null && hit.Highlight.ContainsKey("content") 
-                        ? string.Join(" ... ", hit.Highlight["content"]) 
-                        : (hit.Source?.Content.Length > 300 ? hit.Source.Content.Substring(0, 300) + "..." : hit.Source?.Content ?? "")
-                });
+                return Ok(results);
             }catch(Exception)
             {
                 _logger.LogError("Error searching the document for query: " + query);
