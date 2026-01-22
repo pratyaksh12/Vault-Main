@@ -3,6 +3,8 @@ using Vault.Models;
 using UglyToad.PdfPig;
 using Microsoft.EntityFrameworkCore.Internal;
 using Vault.Interfaces;
+using System.Threading.Tasks;
+using System.IO.Compression;
 
 namespace Vault.Tasks;
 
@@ -40,7 +42,90 @@ public class Worker : BackgroundService
     private void OnCreated(object sender, FileSystemEventArgs e)
     {
         _logger.LogInformation("New File Detected at "+ e.FullPath);
-        _ = ProcessFileAsync(e.FullPath);
+
+        string extension = Path.GetExtension(e.FullPath).ToLower();
+
+        if(extension == ".zip")
+        {
+            _ = ProcessZipAsync(e.FullPath);
+        }
+        else
+        {
+           _ = ProcessFileAsync(e.FullPath); 
+        }
+        
+    }
+
+    private async Task ProcessZipAsync(string fullPath)
+    {
+        try
+        {
+            await WaitForFileAccess(fullPath);
+            _logger.LogInformation("Processing zip file at location: " + fullPath);
+
+            string extractionPath = Path.Combine(Path.GetTempPath(), "vault_extract_" + Guid.NewGuid());
+            Directory.CreateDirectory(extractionPath);
+
+            try
+            {
+                ZipFile.ExtractToDirectory(fullPath, extractionPath);
+
+                var files = Directory.GetFiles(extractionPath, "*.*", SearchOption.AllDirectories).Where(f => Path.GetExtension(f).Equals(".pdf", StringComparison.CurrentCultureIgnoreCase) && !Path.GetFileName(f).StartsWith("_.") && !Path.GetFileName(f).Contains("__MACOSX")).ToList();
+
+                _logger.LogInformation("Extraction of files completed. Total files found: " + files.Count);
+
+                var documents = new List<Document>();
+                foreach (var item in files)
+                {
+                    var doc = CreateDocumentFromFile(item);
+                    if(doc is not null) documents.Add(doc);
+                }
+
+                if (documents.Count != 0)
+                {
+                    using(var scope = _scopeFactory.CreateScope())
+                    {
+                        var repository = scope.ServiceProvider.GetRequiredService<IVaultRepository<Document>>();
+                        await repository.AddRangeAsync(documents);
+                        await repository.SaveChangesAsync();
+                        _logger.LogInformation("Bulk information saved: " + documents.Count);
+                    }
+
+                    await _elasticService.BulkIndexAsync(documents);
+                    _logger.LogInformation("Indexing completed.");
+                }
+
+            }
+            finally
+            {
+                if(Directory.Exists(extractionPath)) Directory.Delete(extractionPath, true);
+            }
+        }catch(Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process zip file: " + fullPath);
+        }
+    }
+
+    private Document? CreateDocumentFromFile(string filePath)
+    {
+        var content = GetFileContent(filePath);
+        if(string.IsNullOrWhiteSpace(content)) return null;
+
+        var fileInfo = new FileInfo(filePath);
+
+        return new Document
+        {
+            Id = Guid.NewGuid().ToString(),
+            Path = filePath,
+            Content = content,
+            ProjectId = "defaut",
+            Status = 1, 
+            ContentType = fileInfo.Extension,
+            ContentLength = fileInfo.Length,
+            ExtractionDate = DateTime.UtcNow,
+            Metadata = "{}", 
+            ParentId = Guid.Empty.ToString() 
+        };
     }
 
     private void OnError(object sender, ErrorEventArgs e)
@@ -54,37 +139,23 @@ public class Worker : BackgroundService
             await WaitForFileAccess(filePath);
 
             // read content
-            var content = GetFileContent(filePath);
+            var doc = CreateDocumentFromFile(filePath);
 
-            if(string.IsNullOrWhiteSpace(content)) return;
+            if(doc is null) return;
 
             var fileInfo = new FileInfo(filePath);
-
-            Document doc = new()
-            {
-                Id = Guid.NewGuid().ToString(),
-                Path = filePath,
-                Content = content,
-                ProjectId = "defaut",
-                Status = 1, // Parsed
-                ContentType = fileInfo.Extension,
-                ContentLength = fileInfo.Length,
-                ExtractionDate = DateTime.UtcNow,
-                Metadata = "{}", // [FIX] Required field
-                ParentId = Guid.Empty.ToString() // [FIX] Required field
-            };
 
             //Send it to elasticsearch
             using (var scope = _scopeFactory.CreateScope()){
                 var repository = scope.ServiceProvider.GetRequiredService<IVaultRepository<Document>>();
 
                 await repository.AddAsync(doc);
-                await repository.SaveChangesAsync(); // [FIX] Commit transaction
-                _logger.LogInformation("Saved to DB: {Id} -> "+ doc.Id);
+                await repository.SaveChangesAsync();
+                _logger.LogInformation("Saved to DB: {Id}: "+ doc.Id);
             }
 
             await _elasticService.IndexDocumentAsync(doc);
-            _logger.LogInformation("Indexing of the file completed; {Id} -> " + doc.Id);
+            _logger.LogInformation("Indexing of the file completed; {Id}: " + doc.Id);
 
         }
         catch(Exception ex)
