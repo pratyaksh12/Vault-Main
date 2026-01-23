@@ -4,6 +4,8 @@
 
 Built with **.NET 9**, **PostgreSQL**, **Elasticsearch**, and **Next.js**.
 
+![Vault Search Demo](assets/search_demo.png)
+
 ## 🚀 Use Cases
 
 *   **Legal & Compliance**: Instantly find specific clauses or keywords across thousands of legal contracts.
