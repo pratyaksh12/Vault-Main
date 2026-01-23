@@ -54,6 +54,15 @@ export default function Home() {
     }
   };
 
+  const handleOpen = async (id: string) => {
+    try {
+        await axios.get(`http://localhost:5123/api/documents/${id}/open`);
+    } catch (err: any) {
+        console.error(err);
+        alert("Failed to open file locally. Is the backend running?");
+    }
+  };
+
   return (
     <main className="min-h-screen bg-neutral-900 text-neutral-100 p-8">
       <div className="max-w-4xl mx-auto space-y-8">
@@ -105,7 +114,7 @@ export default function Home() {
             results.map((doc) => (
               <div
                 key={doc.id}
-                onClick={() => window.open(`http://localhost:5123/api/documents/${doc.id}/download#page=${doc.pageNumber}`, '_blank')}
+                onClick={() => handleOpen(doc.id)}
                 className="bg-neutral-800 border border-neutral-700 p-6 rounded-xl hover:border-blue-500 cursor-pointer transition-all active:scale-[0.99]"
               >
                 <div className="flex items-center justify-between mb-2">

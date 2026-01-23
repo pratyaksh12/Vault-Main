@@ -45,6 +45,30 @@ namespace Vault.Controller
             }
             
         }
+        [HttpGet("{id}/open")]
+        public async Task<IActionResult> OpenInSystemViewer([FromRoute]string id)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest();
+            }
+
+            var doc = await _repository.GetByIdAsync(id);
+
+            if(doc is null) return NotFound("File was not found");
+
+            if(!System.IO.File.Exists(doc.Path)) return NotFound("File does not exst on disk");
+
+            try
+            {
+                System.Diagnostics.Process.Start("open", doc.Path);
+                return Ok(new {message = "file opened successfully"});
+            }catch(Exception ex)
+            {
+                _logger.LogError(ex, "Failed to open file locally");
+                return StatusCode(500, "Failure to launch file");
+            }
+        }
 
         [HttpGet("{id}/download")]
         public async Task<IActionResult> Download(string id)
