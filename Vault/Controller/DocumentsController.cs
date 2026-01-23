@@ -65,5 +65,37 @@ namespace Vault.Controller
 
             return File(filestream, mimeType, Path.GetFileName(doc.Path));
         }
+
+        [HttpPost("upload")]
+        public async Task<IActionResult> Upload(IFormFile file)
+        {
+            if(!ModelState.IsValid || file is null || file.Length == 0)
+            {
+                return BadRequest("No File Uploaded or Model state is invalid");
+            }
+
+            string extension = Path.GetExtension(file.FileName).ToLower();
+            if(extension != ".pdf" && extension != ".zip" && extension != ".txt")
+            {
+                return BadRequest("Extension not supported, use(.pdf, .zip, .txt) files for now");
+            }
+
+            string ingestPath = "/tmp/vault_ingest";
+            Directory.CreateDirectory(ingestPath);
+
+            string targetFile = Path.Combine(ingestPath, file.FileName);
+
+            if (System.IO.File.Exists(targetFile))
+            {
+                targetFile = Path.Combine(ingestPath, $"{Guid.NewGuid()}_{file.FileName}");
+            }
+
+            using(var stream = new FileStream(targetFile, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return Ok(new {message = "File uploaded and queued for processing"});
+        }
     }
 }

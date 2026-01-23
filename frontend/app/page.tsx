@@ -38,16 +38,40 @@ export default function Home() {
     }
   };
 
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        await axios.post("http://localhost:5123/api/documents/upload", formData);
+        alert(`Successfully uploaded: ${file.name}\nIt will be indexed shortly.`);
+    } catch (err: any) {
+        console.error(err);
+        alert(`Upload failed: ${err.message}`);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-neutral-900 text-neutral-100 p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         
-        {/* Header */}
-        <div className="text-center space-y-4">
+        {/* Header & Upload */}
+        <div className="flex flex-col items-center space-y-4 relative">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
             Vault Search
           </h1>
           <p className="text-neutral-400">Search your indexed documents instantly.</p>
+          
+          {/* Upload Button */}
+          <div className="absolute top-0 right-0">
+            <label className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer transition-colors shadow-lg shadow-green-900/20 flex items-center gap-2">
+              <span>Upload File</span>
+              <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.zip,.txt" />
+            </label>
+          </div>
         </div>
 
         {/* Search Bar */}

@@ -6,6 +6,7 @@ using Vault.Interfaces;
 using System.Threading.Tasks;
 using System.IO.Compression;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
+using Elastic.Clients.Elasticsearch;
 
 namespace Vault.Tasks;
 
@@ -16,6 +17,8 @@ public class Worker : BackgroundService
     private readonly FileSystemWatcher _watcher;
     private readonly IServiceScopeFactory _scopeFactory;
     private const string WatchPath = "/tmp/vault_ingest";
+    private readonly string PermenantValuePath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory) + "/Vault_files";
+
 
     public Worker(ILogger<Worker> logger, IElasticSearchService elasticService, IServiceScopeFactory scopeFactory)
     {
@@ -176,34 +179,79 @@ public class Worker : BackgroundService
     {
         _logger.LogError(e.GetException(), "File Watcher Error");
     }
-    private async Task ProcessFileAsync(string filePath)
+    private async Task ProcessFileAsync(string tempFilePath)
     {
-        
-        try{
-            await WaitForFileAccess(filePath);
 
-            // read content
-            var docs = CreateDocumentsFromFile(filePath);
+        try
+        {
+            await WaitForFileAccess(tempFilePath);
+            
+            if(!File.Exists(tempFilePath)) return; 
 
-            if(docs is null || docs.Count == 0) return;
+            string checksum = CalculateHash(tempFilePath);
+            
+            using (var scope = _scopeFactory.CreateScope())
+            {
+                var repo = scope.ServiceProvider.GetRequiredService<IVaultRepository<Document>>();
+                //TODO: Add a checker for checksum.
+            }
 
-            //Send it to elasticsearch
-            using (var scope = _scopeFactory.CreateScope()){
+            string fileName = Path.GetFileName(tempFilePath);
+            Directory.CreateDirectory(PermenantValuePath);
+            string finalPath = Path.Combine(PermenantValuePath, fileName);
+
+            if (File.Exists(finalPath))
+            {
+                string existingHash = CalculateHash(finalPath);
+                if(existingHash == checksum)
+                {
+                    File.Delete(tempFilePath);
+                }
+            }
+            else
+            {
+                string uniqueName = $"{Path.GetFileNameWithoutExtension(fileName)}_{Guid.NewGuid().ToString().Substring(0,8)}{Path.GetExtension(fileName)}";
+                finalPath = Path.Combine(PermenantValuePath, uniqueName);
+                File.Move(tempFilePath, finalPath);
+            }
+
+            //process from final path
+
+            var docs = CreateDocumentsFromFile(finalPath);
+            if(docs == null || docs.Count == 0)
+            {
+                return;
+            }
+
+            foreach(var item in docs)
+            {
+                item.Checksum = checksum;
+            }
+
+            using(var scope = _scopeFactory.CreateScope())
+            {
                 var repository = scope.ServiceProvider.GetRequiredService<IVaultRepository<Document>>();
 
                 await repository.AddRangeAsync(docs);
                 await repository.SaveChangesAsync();
-                _logger.LogInformation("Saved docs to DB. Total count: "+ docs.Count);
+                _logger.LogInformation("Saved document to DB from Path: " + finalPath);
             }
 
             await _elasticService.BulkIndexAsync(docs);
-            _logger.LogInformation("Indexing of the file completed; {Id}: " + docs.Count);
+            _logger.LogInformation("Indexed " + docs.Count + " pages to ElasticSearch.");
 
-        }
-        catch(Exception ex)
+        }catch(Exception ex)
         {
-            _logger.LogError(ex, "Failed to process file aT: " + filePath);
+            _logger.LogError(ex, "Filed Processing the file from: " + tempFilePath);
         }
+    }
+
+    private string CalculateHash(string filePath)
+    {
+        using var sha256 = System.Security.Cryptography.SHA256.Create();
+        using var stream = File.OpenRead(filePath);
+        var hash = sha256.ComputeHash(stream);
+        return Convert.ToHexStringLower(hash);
     }
 
     private string GetFileContent(string filePath)

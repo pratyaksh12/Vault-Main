@@ -63,6 +63,10 @@ public class Document
 
     [Column("ner_mask")]
     public short? NerMask {get; set;}
+
+    [Column("checksum")]
+    [MaxLength(64)]
+    public string Checksum{get; set;} = null!;
 }
 
 
