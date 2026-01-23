@@ -44,7 +44,7 @@ Built with **.NET 9**, **PostgreSQL**, **Elasticsearch**, and **Next.js**.
 ## 🚧 Pending Features
 
 - [x] ~~**Pagination & Filtering**: Handle large result sets efficiently.~~
-- [ ] **OCR Support**: Extract text from scanned images/PDFs.
+- [x] ~~**OCR Support**: Extract text from scanned images/PDFs.~~
 - [ ] **Authentication**: Secure the index with user login.
 - [ ] **Named Entity Recognition (NER)**: Auto-extract names, dates, and locations (Phase 4).
 
@@ -84,4 +84,4 @@ npm run dev
 *   Go to `http://localhost:3000` and search!
 
 ---
-*Built with Curiosity for JUST SOMETHING EASY (iykyk) by [Pratyaksh]*
+*Built with Curiosity for JEF (iykyk) by [Pratyaksh]*

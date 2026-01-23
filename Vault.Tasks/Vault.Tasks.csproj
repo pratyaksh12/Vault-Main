@@ -12,6 +12,8 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.10" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.0" />
     <PackageReference Include="PdfPig" Version="0.1.12" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+    <PackageReference Include="Tesseract" Version="5.2.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,4 +21,15 @@
     <ProjectReference Include="..\Vault.Index\Vault.Index.csproj" />
     <ProjectReference Include="..\Vault.Db\Vault.Db.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <None Update="tessdata\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <Target Name="CopyTesseractNativeLibs" AfterTargets="Build">
+    <Exec Command="mkdir -p $(OutputPath)/x64" />
+    <Exec Command="ln -sf /opt/homebrew/lib/libleptonica.dylib $(OutputPath)/x64/libleptonica-1.82.0.dylib" />
+    <Exec Command="ln -sf /opt/homebrew/lib/libtesseract.dylib $(OutputPath)/x64/libtesseract50.dylib" />
+  </Target>
 </Project>

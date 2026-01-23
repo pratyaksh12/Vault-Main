@@ -95,15 +95,20 @@ namespace Vault.Controller
         }
 
         [HttpPost("upload")]
+        [DisableRequestSizeLimit]
+        [RequestFormLimits(MultipartBodyLengthLimit = long.MaxValue)]
         public async Task<IActionResult> Upload(IFormFile file)
         {
             if(!ModelState.IsValid || file is null || file.Length == 0)
             {
+                _logger.LogWarning("Upload failed: File is null or empty");
                 return BadRequest("No File Uploaded or Model state is invalid");
             }
 
             string extension = Path.GetExtension(file.FileName).ToLower();
-            if(extension != ".pdf" && extension != ".zip" && extension != ".txt")
+            _logger.LogInformation($"Received file upload: {file.FileName} ({extension})");
+
+            if(extension != ".pdf" && extension != ".zip" && extension != ".txt" && extension != ".jpg" && extension != ".jpeg" && extension != ".png")
             {
                 return BadRequest("Extension not supported, use(.pdf, .zip, .txt) files for now");
             }
@@ -111,17 +116,22 @@ namespace Vault.Controller
             string ingestPath = "/tmp/vault_ingest";
             Directory.CreateDirectory(ingestPath);
 
-            string targetFile = Path.Combine(ingestPath, file.FileName);
+            
+            string tempFileName = $".tmp_{Guid.NewGuid()}_{file.FileName}";
+            string tempFilePath = Path.Combine(ingestPath, tempFileName);
 
+            using(var stream = new FileStream(tempFilePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            
+            string targetFile = Path.Combine(ingestPath, file.FileName);
             if (System.IO.File.Exists(targetFile))
             {
                 targetFile = Path.Combine(ingestPath, $"{Guid.NewGuid()}_{file.FileName}");
             }
-
-            using(var stream = new FileStream(targetFile, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
+            System.IO.File.Move(tempFilePath, targetFile);
 
             return Ok(new {message = "File uploaded and queued for processing"});
         }

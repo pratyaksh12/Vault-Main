@@ -77,7 +77,8 @@ export default function Home() {
         alert(`Successfully uploaded: ${file.name}\nIt will be indexed shortly.`);
     } catch (err: any) {
         console.error(err);
-        alert(`Upload failed: ${err.message}`);
+        const serverMessage = err.response?.data || err.message;
+        alert(`Upload failed: ${JSON.stringify(serverMessage)}`);
     }
   };
 
@@ -105,7 +106,7 @@ export default function Home() {
           <div className="absolute top-0 right-0">
             <label className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-4 py-2 rounded-lg cursor-pointer transition-colors shadow-lg shadow-green-900/20 flex items-center gap-2">
               <span>Upload File</span>
-              <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.zip,.txt" />
+              <input type="file" className="hidden" onChange={handleUpload} accept=".pdf,.zip,.txt,.jpg,.jpeg,.png" />
             </label>
           </div>
         </div>

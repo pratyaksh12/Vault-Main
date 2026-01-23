@@ -56,7 +56,7 @@ public class ElasticSearchService : IElasticSearchService
                 m => m.Properties(
                     p => p.Keyword(d => d.Id)
                     .Text(d => d.Content)
-                    .Keyword(d => d.Path)
+                    .Text(d => d.Path) // Changed to Text for partial matching
                     .Keyword(d => d.ProjectId)
                 )
             ));
