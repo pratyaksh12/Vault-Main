@@ -8,6 +8,7 @@ using Vault.Index.IServices;
 using Vault.Interfaces;
 using Vault.Models;
 using Vault.Core.Models;
+using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace Vault.Controller
 {
@@ -27,7 +28,7 @@ namespace Vault.Controller
         }
 
         [HttpGet("search")]
-        public async Task<IActionResult> Search([FromQuery] string query)
+        public async Task<IActionResult> Search([FromQuery] string query, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             if (!ModelState.IsValid || string.IsNullOrWhiteSpace(query))
             {
@@ -36,8 +37,11 @@ namespace Vault.Controller
 
             try
             {
-                var results = await _elasticService.SearchDocumentAsync(query);
-                return Ok(results);
+                if(page < 1) page = 1;
+                if(pageSize < 1) pageSize = 10;
+
+                var result = await _elasticService.SearchDocumentAsync(query, page, pageSize);
+                return Ok(result);
             }catch(Exception)
             {
                 _logger.LogError("Error searching the document for query: " + query);

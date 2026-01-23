@@ -8,34 +8,61 @@ interface DocumentResult {
   id: string;
   path: string;
   snippet: string;
-  pageNumber: number; // Added Page Number
+  pageNumber: number;
+}
+
+// Define the Paged Response Interface
+interface PagedResponse {
+  items: DocumentResult[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
 }
 
 export default function Home() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<DocumentResult[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  
+  // Constants
+  const PAGE_SIZE = 10;
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const fetchDocuments = async (searchQuery: string, pageNum: number) => {
+      setLoading(true);
+      setError("");
+      
+      try {
+          const response = await axios.get<PagedResponse>(
+              `http://localhost:5123/api/documents/search?query=${searchQuery}&page=${pageNum}&pageSize=${PAGE_SIZE}`
+          );
+          
+          setResults(response.data.items);
+          setTotalCount(response.data.totalCount);
+          setPage(pageNum);
+
+      } catch (err: any) {
+          setError(`Error: ${err.message || "Unknown error"}. Check Console.`);
+          console.error(err);
+      } finally {
+          setLoading(false);
+      }
+  };
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!query) return;
-
-    setLoading(true);
-    setError("");
+    // Reset to page 1 on new search
     setResults([]);
+    await fetchDocuments(query, 1);
+  };
 
-    try {
-      const response = await axios.get<DocumentResult[]>(
-        `http://localhost:5123/api/documents/search?query=${query}`
-      );
-      setResults(response.data);
-    } catch (err: any) {
-      setError(`Error: ${err.message || "Unknown error"}. Check Console for details.`);
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  const handlePageChange = async (newPage: number) => {
+      if (newPage < 1 || newPage > totalPages) return;
+      await fetchDocuments(query, newPage);
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -111,36 +138,63 @@ export default function Home() {
         {/* Results Grid */}
         <div className="grid gap-6">
           {results.length > 0 ? (
-            results.map((doc) => (
-              <div
-                key={doc.id}
-                onClick={() => handleOpen(doc.id)}
-                className="bg-neutral-800 border border-neutral-700 p-6 rounded-xl hover:border-blue-500 cursor-pointer transition-all active:scale-[0.99]"
-              >
-                <div className="flex items-center justify-between mb-2">
-                    <span className="text-xs font-mono text-neutral-500 truncate flex-1 min-w-0 mr-4" title={doc.path}>
-                        {doc.path}
-                    </span>
-                    
-                    {/* Page Badge */}
-                    <span className="text-xs bg-blue-900/50 text-blue-200 px-2 py-1 rounded mr-2 shrink-0">
-                        Page {doc.pageNumber}
-                    </span>
+            <>
+              {results.map((doc) => (
+                <div
+                  key={doc.id}
+                  onClick={() => handleOpen(doc.id)}
+                  className="bg-neutral-800 border border-neutral-700 p-6 rounded-xl hover:border-blue-500 cursor-pointer transition-all active:scale-[0.99]"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-mono text-neutral-500 truncate flex-1 min-w-0 mr-4" title={doc.path}>
+                          {doc.path}
+                      </span>
+                      
+                      {/* Page Badge */}
+                      <span className="text-xs bg-blue-900/50 text-blue-200 px-2 py-1 rounded mr-2 shrink-0">
+                          Page {doc.pageNumber}
+                      </span>
 
-                    <span className="text-xs bg-neutral-700 px-2 py-1 rounded text-neutral-300 shrink-0">
-                        Match
-                    </span>
+                      <span className="text-xs bg-neutral-700 px-2 py-1 rounded text-neutral-300 shrink-0">
+                          Match
+                      </span>
+                  </div>
+                  
+                  {/* Content Snippet (Rendered HTML for Highlights) */}
+                  <p 
+                      className="text-neutral-300 leading-relaxed break-all"
+                      dangerouslySetInnerHTML={{ __html: doc.snippet }}
+                  />
                 </div>
-                
-                {/* Content Snippet (Rendered HTML for Highlights) */}
-                <p 
-                    className="text-neutral-300 leading-relaxed break-all"
-                    dangerouslySetInnerHTML={{ __html: doc.snippet }}
-                />
-              </div>
-            ))
+              ))}
+
+              {/* Pagination Controls */}
+              {totalCount > PAGE_SIZE && (
+                <div className="flex justify-center items-center gap-4 mt-8 pt-4 border-t border-neutral-800">
+                  <button
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1 || loading}
+                    className="px-4 py-2 bg-neutral-800 rounded-lg disabled:opacity-50 hover:bg-neutral-700 transition-colors"
+                  >
+                    Previous
+                  </button>
+                  
+                  <span className="text-neutral-400">
+                    Page <span className="text-white font-bold">{page}</span> of <span className="text-white font-bold">{totalPages}</span>
+                  </span>
+
+                  <button
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page === totalPages || loading}
+                    className="px-4 py-2 bg-neutral-800 rounded-lg disabled:opacity-50 hover:bg-neutral-700 transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
-            !loading && results.length === 0 && query && (
+            !loading && query && results.length === 0 && (
                 <div className="text-center text-neutral-500 py-10">No results found.</div>
             )
           )}

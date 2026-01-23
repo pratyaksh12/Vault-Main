@@ -43,7 +43,7 @@ Built with **.NET 9**, **PostgreSQL**, **Elasticsearch**, and **Next.js**.
 
 ## 🚧 Pending Features
 
-- [ ] **Pagination & Filtering**: Handle large result sets efficiently.
+- [x] ~~**Pagination & Filtering**: Handle large result sets efficiently.~~
 - [ ] **OCR Support**: Extract text from scanned images/PDFs.
 - [ ] **Authentication**: Secure the index with user login.
 - [ ] **Named Entity Recognition (NER)**: Auto-extract names, dates, and locations (Phase 4).

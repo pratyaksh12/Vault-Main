@@ -111,4 +111,52 @@ public class ElasticSearchService : IElasticSearchService
         });
     }
 
+    public async Task<PageResult<SearchResult>> SearchDocumentAsync(string query, int page = 1, int pageSize = 10)
+    {
+        var from = (page - 1) * pageSize;
+
+        var response = await _client.SearchAsync<Document>(s => s
+        .Index(IndexName)
+        .From(from)
+        .Size(pageSize)
+        .Query(q =>q
+            .MultiMatch(m => m
+                .Fields(Infer.Fields<Document>(p => p.Content, page => page.Path))
+                .Query(query)
+                .Fuzziness(new Fuzziness("AUTO")
+                )
+            )
+        )
+        .Highlight(h => h
+            .Fields(f => f
+                .Add(Infer.Field<Document>(p => p.Content), new HighlightField
+                {
+                    PreTags = new[] { "<em>"},
+                    PostTags = new[] {"</em>"},
+                    FragmentSize = 300
+                })
+            )
+        ));
+
+        if (!response.IsValidResponse)
+        {
+            return new PageResult<SearchResult>{Items = new List<SearchResult>(), TotalCount = 0};
+        }
+
+        var items = response.Hits.Select(hit => new SearchResult
+        {
+            Id = hit.Source?.Id ?? "",
+            Path = hit.Source?.Path ?? "",
+            PageNumber = hit.Source?.PageNumber ?? 1,
+            Snippet = hit.Highlight != null && hit.Highlight.ContainsKey("content") ? string.Join("...", hit.Highlight["content"]) : (hit.Source?.Content.Length > 300 ? hit.Source?.Content.Substring(0, 150) + "..." : hit.Source?.Content?? "")
+        }).ToList();
+
+        return new PageResult<SearchResult>{
+            Items = items,
+            TotalCount = response.Total,
+            Page = page,
+            PageSize = pageSize
+        };
+
+    }
 }

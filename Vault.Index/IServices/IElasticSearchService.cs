@@ -11,5 +11,6 @@ public interface IElasticSearchService
     Task IndexDocumentAsync(Document document);
     Task BulkIndexAsync(IEnumerable<Document> documents);
     Task<IEnumerable<SearchResult>> SearchDocumentAsync(string query);
+    Task<PageResult<SearchResult>> SearchDocumentAsync(string query, int page = 1, int pageSize = 10);
     
 }
