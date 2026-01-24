@@ -76,57 +76,6 @@ public class Worker : BackgroundService
 
     }
 
-    
-
-    // private async Task ProcessZipAsync(string fullPath)
-    // {
-    //     try
-    //     {
-    //         await WaitForFileAccess(fullPath);
-    //         _logger.LogInformation("Processing zip file at location: " + fullPath);
-
-    //         string extractionPath = Path.Combine(Path.GetTempPath(), "vault_extract_" + Guid.NewGuid());
-    //         Directory.CreateDirectory(extractionPath);
-
-    //         try
-    //         {
-    //             ZipFile.ExtractToDirectory(fullPath, extractionPath);
-
-    //             var files = Directory.GetFiles(extractionPath, "*.*", SearchOption.AllDirectories).Where(f => Path.GetExtension(f).Equals(".pdf", StringComparison.CurrentCultureIgnoreCase) && !Path.GetFileName(f).StartsWith("_.") && !Path.GetFileName(f).Contains("__MACOSX")).ToList();
-
-    //             _logger.LogInformation("Extraction of files completed. Total files found: " + files.Count);
-
-    //             var documents = new List<Document>();
-    //             foreach (var item in files)
-    //             {
-    //                 var docs = CreateDocumentsFromFile(item);
-    //                 if(docs is not null && docs.Any()) documents.AddRange(docs);
-    //             }
-
-    //             if (documents.Count != 0)
-    //             {
-    //                 using(var scope = _scopeFactory.CreateScope())
-    //                 {
-    //                     var repository = scope.ServiceProvider.GetRequiredService<IVaultRepository<Document>>();
-    //                     await repository.AddRangeAsync(documents);
-    //                     await repository.SaveChangesAsync();
-    //                     _logger.LogInformation("Bulk information saved: " + documents.Count);
-    //                 }
-
-    //                 await _elasticService.BulkIndexAsync(documents);
-    //                 _logger.LogInformation("Indexing completed.");
-    //             }
-
-    //         }
-    //         finally
-    //         {
-    //             if(Directory.Exists(extractionPath)) Directory.Delete(extractionPath, true);
-    //         }
-    //     }catch(Exception ex)
-    //     {
-    //         _logger.LogError(ex, "Failed to process zip file: " + fullPath);
-    //     }
-    // }
 
     private List<Document> CreateDocumentsFromFile(string filePath, string checksum)
     {
@@ -293,23 +242,45 @@ public class Worker : BackgroundService
 
             string checksum = await CalculateHashAsync(filePath, stoppingToken);
 
-            string targetPath = Path.Combine(_storagePath, fileInfo.Name);
-            if (File.Exists(targetPath))
+            if (string.Equals(fileInfo.Extension, ".zip", StringComparison.OrdinalIgnoreCase))
             {
-                if(await CalculateHashAsync(targetPath, stoppingToken) == checksum)
+                 // Move ZIP to storage first
+                string targetPath = Path.Combine(_storagePath, fileInfo.Name);
+                if (File.Exists(targetPath))
+                {
+                    if(await CalculateHashAsync(targetPath, stoppingToken) == checksum)
+                    {
+                        _logger.LogWarning("Duplicate file found. Skipping: "+ fileInfo.Name);
+                        File.Delete(filePath);
+                        return;
+                    }
+                    targetPath = Path.Combine(_storagePath, $"{Guid.NewGuid()}_{fileInfo.Name}");
+                }
+
+                File.Move(filePath, targetPath);
+                _logger.LogInformation("Moved the ZIP file to storage: " + targetPath);
+
+                await ProcessZipAsync(targetPath, stoppingToken);
+                return;
+            }
+
+            string finalPath = Path.Combine(_storagePath, fileInfo.Name);
+            if (File.Exists(finalPath))
+            {
+                if(await CalculateHashAsync(finalPath, stoppingToken) == checksum)
                 {
                     _logger.LogWarning("Duplicate file found. Skipping: "+ fileInfo.Name);
                     File.Delete(filePath);
                     return;
                 }
 
-                targetPath = Path.Combine(_storagePath, $"{Guid.NewGuid()}_{fileInfo.Name}");
+                finalPath = Path.Combine(_storagePath, $"{Guid.NewGuid()}_{fileInfo.Name}");
             }
 
-            File.Move(filePath, targetPath);
-            _logger.LogInformation("Moved the file to storage: " + targetPath);
+            File.Move(filePath, finalPath);
+            _logger.LogInformation("Moved the file to storage: " + finalPath);
 
-            var docs = CreateDocumentsFromFile(targetPath, checksum);
+            var docs = CreateDocumentsFromFile(finalPath, checksum);
             if(docs.Count == 0)
             {
                 _logger.LogInformation("File was empty skipping: "+ fileInfo.Name);
@@ -332,6 +303,66 @@ public class Worker : BackgroundService
         }catch(Exception ex)
         {
             _logger.LogError(ex, "Filed Processing the file from: " + filePath);
+        }
+    }
+
+    private async Task ProcessZipAsync(string zipFilePath, CancellationToken stoppingToken)
+    {
+        try
+        {
+            _logger.LogInformation("Processing processed zip file at location: " + zipFilePath);
+
+            string extractionFolderName = $"{Path.GetFileNameWithoutExtension(zipFilePath)}_{Guid.NewGuid()}";
+            string extractionPath = Path.Combine(_storagePath, "extracted", extractionFolderName);
+            Directory.CreateDirectory(extractionPath);
+
+            try
+            {
+                ZipFile.ExtractToDirectory(zipFilePath, extractionPath);
+
+                var files = Directory.GetFiles(extractionPath, "*.*", SearchOption.AllDirectories)
+                    .Where(f => !Path.GetFileName(f).StartsWith("._") && !Path.GetFileName(f).Contains("__MACOSX"))
+                    .ToList();
+
+                _logger.LogInformation("Extraction of files completed. Total files found: " + files.Count);
+
+                var documents = new List<Document>();
+                foreach (var item in files)
+                {
+                    
+                    var ext = Path.GetExtension(item).ToLower();
+                    if(ext == ".pdf" || ext == ".jpg" || ext == ".png" || ext == ".jpeg" || ext == ".txt")
+                    {
+                         string checksum = await CalculateHashAsync(item, stoppingToken);
+                         var docs = CreateDocumentsFromFile(item, checksum);
+                         if(docs is not null && docs.Any()) documents.AddRange(docs);
+                    }
+                }
+
+                if (documents.Count != 0)
+                {
+                    using(var scope = _scopeFactory.CreateScope())
+                    {
+                        var repository = scope.ServiceProvider.GetRequiredService<IVaultRepository<Document>>();
+                        await repository.AddRangeAsync(documents);
+                        await repository.SaveChangesAsync();
+                        _logger.LogInformation("Bulk information saved: " + documents.Count);
+                    }
+
+                    await _elasticService.BulkIndexAsync(documents);
+                    _logger.LogInformation("Indexing completed for ZIP contents.");
+                }
+
+            }
+            catch(Exception ex)
+            {
+                 _logger.LogError(ex, "Failed during extraction/processing of zip: " + zipFilePath);
+                 
+            }
+        }
+        catch(Exception ex)
+        {
+            _logger.LogError(ex, "Failed to process zip file: " + zipFilePath);
         }
     }
 

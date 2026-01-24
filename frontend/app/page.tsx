@@ -97,7 +97,7 @@ export default function Home() {
         
         {/* Header & Upload */}
         <div className="flex flex-col items-center space-y-4 relative">
-          <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
             Vault Search
           </h1>
           <p className="text-neutral-400">Search your indexed documents instantly.</p>
