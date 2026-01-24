@@ -54,6 +54,10 @@ Built with **.NET 9**, **PostgreSQL**, **Elasticsearch**, and **Next.js**.
 *   Docker & Docker Compose
 *   .NET 9 SDK
 *   Node.js (v20+)
+*   **macOS (Apple Silicon) Requirements:**
+    *   Homebrew (`brew`)
+    *   `brew install tesseract leptonica`
+    *   **Note:** The current build configuration hardcodes paths to these Homebrew libraries. Users on Intel Macs, Windows, or Linux will need to install these libraries manually and potentially modify `Vault.Tasks.csproj`.
 
 ### 1. Start Services
 ```bash
