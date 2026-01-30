@@ -9,6 +9,7 @@ interface DocumentResult {
   path: string;
   snippet: string;
   pageNumber: number;
+  metadata: string;
 }
 
 // Define the Paged Response Interface
@@ -18,6 +19,53 @@ interface PagedResponse {
   page: number;
   pageSize: number;
 }
+
+// Helper to parse metadata and render chips
+const EntityChips = ({ metadataJson }: { metadataJson: string }) => {
+  if (!metadataJson || metadataJson === "{}") return null;
+
+  try {
+    const data = JSON.parse(metadataJson);
+    const chips: JSX.Element[] = [];
+
+    // Emails (Blue chips)
+    if (data.emails && Array.isArray(data.emails)) {
+      data.emails.forEach((email: string) => chips.push(
+        <span key={email} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-900/40 text-blue-200 border border-blue-800/50 mr-2 mb-1">
+          ✉️ {email}
+        </span>
+      ));
+    }
+
+    // Phones (Green chips)
+    if (data.phones && Array.isArray(data.phones)) {
+      data.phones.forEach((phone: string) => chips.push(
+        <span key={phone} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-900/40 text-green-200 border border-green-800/50 mr-2 mb-1">
+          📞 {phone}
+        </span>
+      ));
+    }
+
+     // Dates (Purple chips)
+     if (data.dates && Array.isArray(data.dates)) {
+      data.dates.forEach((date: string) => chips.push(
+        <span key={date} className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-purple-900/40 text-purple-200 border border-purple-800/50 mr-2 mb-1">
+          📅 {date}
+        </span>
+      ));
+    }
+
+    if (chips.length === 0) return null;
+
+    return (
+      <div className="flex flex-wrap mt-3 pt-3 border-t border-neutral-700/50">
+        {chips}
+      </div>
+    );
+  } catch (e) {
+    return null; // Invalid JSON
+  }
+};
 
 export default function Home() {
   const [query, setQuery] = useState("");
@@ -166,6 +214,9 @@ export default function Home() {
                       className="text-neutral-300 leading-relaxed break-all"
                       dangerouslySetInnerHTML={{ __html: doc.snippet }}
                   />
+
+                  {/* Render Extracted Entities */}
+                  <EntityChips metadataJson={doc.metadata} />
                 </div>
               ))}
 

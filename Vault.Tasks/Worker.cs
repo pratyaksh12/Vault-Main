@@ -12,6 +12,7 @@ using System.Text;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using Tesseract;
+using System.Text.Json;
 
 namespace Vault.Tasks;
 
@@ -119,6 +120,10 @@ public class Worker : BackgroundService
                     {
                         _logger.LogInformation("Using PDF Text (Length: {Length}) for page {Page}", text.Length, page.Number);
                     }
+
+                    var entities = EntityExtractor.Extract(text);
+                    var metadatajson = JsonSerializer.Serialize(entities);
+
                     docs.Add(new Document
                     {
                         Id = Guid.NewGuid().ToString(),
@@ -129,7 +134,7 @@ public class Worker : BackgroundService
                         ContentType = ext,
                         ContentLength = text.Length,
                         ExtractionDate = DateTime.UtcNow,
-                        Metadata = "{}",
+                        Metadata = metadatajson,
                         ParentId = Guid.Empty.ToString(),
                         PageNumber = page.Number ,
                         Checksum = checksum
@@ -144,7 +149,10 @@ public class Worker : BackgroundService
         {
             _logger.LogInformation("Processing image for OCR: {Path}", filePath);
             string text = PerformOcr(File.ReadAllBytes(filePath));
-            
+
+            var entities = EntityExtractor.Extract(text);
+            var metadatajson = JsonSerializer.Serialize(entities);
+
             docs.Add(new Document
             {
                 Id = Guid.NewGuid().ToString(),
@@ -155,7 +163,7 @@ public class Worker : BackgroundService
                 ContentType = ext,
                 ContentLength = text.Length,
                 ExtractionDate = DateTime.UtcNow,
-                Metadata = "{}",
+                Metadata = metadatajson,
                 ParentId = Guid.Empty.ToString(),
                 PageNumber = docs.Count,
                 Checksum = checksum
@@ -163,6 +171,10 @@ public class Worker : BackgroundService
         }else if (ext == ".txt")
         {
             string text = File.ReadAllText(filePath);
+
+            var entities = EntityExtractor.Extract(text);
+            var metadatajson = JsonSerializer.Serialize(entities);
+
             docs.Add(new Document
             {
                 Id = Guid.NewGuid().ToString(),
@@ -173,7 +185,7 @@ public class Worker : BackgroundService
                 ContentType = ext,
                 ContentLength = text.Length,
                 ExtractionDate = DateTime.UtcNow,
-                Metadata = "{}",
+                Metadata = metadatajson,
                 ParentId = Guid.Empty.ToString(),
                 PageNumber = docs.Count,
                 Checksum = checksum
